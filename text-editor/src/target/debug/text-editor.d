@@ -1,0 +1,1 @@
+C:\Users\paunc\Desktop\Projects\Rust\text-editor\target\debug\text-editor.exe: C:\Users\paunc\Desktop\Projects\Rust\text-editor\src\editor.rs C:\Users\paunc\Desktop\Projects\Rust\text-editor\src\main.rs

@@ -1,0 +1,1 @@
+fn(axum::Form<LoginForm>) -> impl Future<Output = impl axum::response::IntoResponse> {auth::User::login}
