@@ -90,14 +90,15 @@ impl Editor {
     
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
         Terminal::hide_cursor()?;
-
+        Terminal::move_cursor(&Position::default())?;
+        
         if self.should_quit {
             Terminal::clear_screen()?;
             Terminal::move_cursor(&Position::default())?;
             Terminal::print("Goodbye.\r\n")?;
         }
         else {
-            // self.view.render()?; // todo: make navigation work without breaking the view
+            //self.view.render()?; // todo: make navigation work without breaking the view
             Terminal::move_cursor(&Position{
                 x: self.location.x as u16,
                 y: self.location.y as u16,
@@ -107,42 +108,45 @@ impl Editor {
         }
         Ok(())
     }
-
     pub fn move_cursor_by_key(&mut self, keycode: KeyCode) -> Result<(), std::io::Error> {
-        let mut l = &mut self.location;
-        let mut s = Terminal::get_terminal_size()?;
-        
+        let terminal_size = Terminal::get_terminal_size()?;
+        let buffer_height = self.view.buffer.lines.len();
+        let location = &mut self.location;
+        let scroll_offset = &mut self.view.scroll_offset;
+
         match keycode {
             KeyCode::Right => {
-                l.x = core::cmp::min(s.width.saturating_sub(1) as usize, l.x.saturating_add(1));
+                location.x = core::cmp::min(self.view.buffer.lines[location.y].len(), location.x + 1);
             }
             KeyCode::Left => {
-                l.x = l.x.saturating_sub(1);
+                location.x = location.x.saturating_sub(1);
             }
             KeyCode::Up => {
-                s.height = s.height.saturating_sub(1);
-                l.y = l.y.saturating_sub(1);
+                if location.y > 0 {
+                    location.y = location.y.saturating_sub(1);
+                    
+                    // Scroll up if cursor goes beyond visible area
+                    if location.y < scroll_offset.y {
+                        scroll_offset.y = scroll_offset.y.saturating_sub(1);
+                        self.view.render()?;
+                    }
+                }
             }
             KeyCode::Down => {
-                l.y = core::cmp::min(s.height.saturating_sub(1) as usize, l.y.saturating_add(1));
+                if location.y < buffer_height.saturating_sub(1) {
+                    location.y = location.y.saturating_add(1);
+
+                    // Scroll down if cursor goes beyond visible area
+                    if location.y >= scroll_offset.y + terminal_size.height as usize {
+                        scroll_offset.y = scroll_offset.y.saturating_add(1);
+                        self.view.render()?;
+                    }
+                }
             }
-            KeyCode::Home => {
-                l.x = 0;
-            }
-            KeyCode::End => {
-                l.x = s.width.saturating_sub(1) as usize;
-            }
-            KeyCode::PageUp => {
-                l.y = 0;
-            }
-            KeyCode::PageDown => {
-                l.y = s.height.saturating_sub(1) as usize;
-            }
-            _ => ()
+            _ => {}
         }
-        self.location = l;
+
         Ok(())
     }
-
 }
 

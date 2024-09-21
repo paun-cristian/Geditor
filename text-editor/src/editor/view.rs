@@ -9,39 +9,38 @@ pub struct Location {
 }
 
 #[derive(Default, Clone, Copy)]
-struct ScrollOffset {
+pub struct ScrollOffset {
     pub x: usize,
     pub y: usize,
 }
-#[derive(Default)]
+
 pub struct View {
     pub buffer: Buffer,
     pub scroll_offset: ScrollOffset,
 }
 
 impl View {
-    fn default() -> Self {
+    pub fn default() -> Self {
         Self { buffer: Buffer::default(), scroll_offset: ScrollOffset { x: 0, y: 0 } }
     }
     pub fn render_buffer(&self) -> Result<(), std::io::Error> {
-        let terminal::Size { mut height, width} = Terminal::get_terminal_size()?;
-        if self.buffer.lines.len() as u16 > height {
-            height = self.buffer.lines.len() as u16;
-            Terminal::update_size(self.buffer.lines.len() as u16, width)?;
-        }
-        for current_row in 0..height as u16 {
-            Terminal::move_cursor(&terminal::Position { x: 0, y: current_row })?; // Move cursor to the beginning of the line
+        let terminal::Size { height, width } = Terminal::get_terminal_size()?;
+        
+        // Determine the range of buffer lines to render based on scroll_offset
+        let start_line = self.scroll_offset.y;
+        let end_line = core::cmp::min(start_line + height as usize, self.buffer.lines.len());
+
+        for current_row in 0..self.buffer.lines.len() as usize {
+            let buffer_row = current_row + start_line;
+            Terminal::move_cursor(&terminal::Position { x: 0, y: current_row as u16 })?;
             Terminal::clear_line()?; // Clear the current line
-            if let Some(line) = self.buffer.lines.get(current_row as usize) {
-                Terminal::print(line)?;
-                Terminal::print("\r\n")?;
-                }
-             else {
-                Terminal::print("~")?;
+            
+            if let Some(line) = self.buffer.lines.get(buffer_row) {
+                Terminal::print(line)?; // Print the line from the buffer
+            } else {
+                Terminal::print("~")?; // Print a tilde for lines beyond the buffer
             }
-            if current_row + 3 > height {break;}
         }
-        println!("Rows: {}", height); // shows 298, there are actually 298
         Ok(())
     }
 
