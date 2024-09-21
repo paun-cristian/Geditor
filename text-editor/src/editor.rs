@@ -1,15 +1,11 @@
-use crossterm::event::{read, Event::{self, Key}, KeyCode::{self}, KeyEvent, KeyEventKind};
+use crossterm::{event::{read, Event::{self, Key}, KeyCode::{self}, KeyEvent, KeyEventKind}, execute, queue};
 
 pub mod terminal;
 mod view;
 
-use view::View;
+use view::{View, Location};
 use terminal::{Position, Terminal};
-#[derive(Default, Clone, Copy)]
-pub struct Location {
-    x: usize,
-    y: usize,
-}
+
 pub struct Editor {
     should_quit: bool,
     location : Location,
@@ -94,14 +90,15 @@ impl Editor {
     
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
         Terminal::hide_cursor()?;
-        Terminal::move_cursor(&Position{x: 0, y: 0})?;
+
         if self.should_quit {
             Terminal::clear_screen()?;
+            Terminal::move_cursor(&Position::default())?;
             Terminal::print("Goodbye.\r\n")?;
         }
         else {
             // self.view.render()?; // todo: make navigation work without breaking the view
-            Terminal::move_cursor(&terminal::Position{
+            Terminal::move_cursor(&Position{
                 x: self.location.x as u16,
                 y: self.location.y as u16,
             })?;
@@ -112,8 +109,9 @@ impl Editor {
     }
 
     pub fn move_cursor_by_key(&mut self, keycode: KeyCode) -> Result<(), std::io::Error> {
-        let mut l = self.location;
-        let s = Terminal::get_terminal_size()?;
+        let mut l = &mut self.location;
+        let mut s = Terminal::get_terminal_size()?;
+        
         match keycode {
             KeyCode::Right => {
                 l.x = core::cmp::min(s.width.saturating_sub(1) as usize, l.x.saturating_add(1));
@@ -122,6 +120,7 @@ impl Editor {
                 l.x = l.x.saturating_sub(1);
             }
             KeyCode::Up => {
+                s.height = s.height.saturating_sub(1);
                 l.y = l.y.saturating_sub(1);
             }
             KeyCode::Down => {

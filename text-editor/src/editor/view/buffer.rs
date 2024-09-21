@@ -12,7 +12,6 @@ impl Default for Buffer {
         }
         Self {lines}
     }
-
 }
 
 impl Buffer {

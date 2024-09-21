@@ -1,5 +1,5 @@
 use crossterm::{
-    cursor::{Hide, Show}, event::read, queue, style::Print, terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType}
+    cursor::{Hide, Show}, event::read, queue, style::Print, terminal::{disable_raw_mode, enable_raw_mode, size, SetTitle, Clear, ClearType}
 };
 use std::io::{stdout, Write};
 
@@ -19,11 +19,9 @@ pub struct Position {
 
 impl Position {
     pub fn default() -> Self {
-        Self { x: 1, y: 1 }
+        Self { x: 0, y: 0 }
     }
-    pub fn move_right(&mut self) {
-        self.x += 1;
-    }
+
 }
 
 impl Terminal {
@@ -38,7 +36,8 @@ impl Terminal {
     pub fn initialize() -> Result<(), std::io::Error> {
         Terminal::enable_raw_mode()?;
         Terminal::clear_screen()?;
-        Terminal::move_cursor(&Position { x: 1, y: 1 })?;
+        queue!(stdout(), SetTitle("Geditor  "))?;
+        Terminal::move_cursor(&Position::default())?;
         Terminal::execute()?;
         Ok(())
     }
@@ -102,9 +101,13 @@ impl Terminal {
         Ok(())
     }
     pub fn update_size(height: u16, width: u16) -> Result<(), std::io::Error> {
-        let s = &mut Size { height, width };
+        let s = &mut self::Size { height, width };
         s.height = height;
         s.width = width;
+        Ok(())
+    }
+    pub fn update_position(x: u16, y: u16) -> Result<(), std::io::Error> {
+        self::Position { x, y };
         Ok(())
     }
     
