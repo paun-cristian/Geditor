@@ -1,4 +1,4 @@
-use crossterm::{event::{read, Event::{self, Key}, KeyCode::{self}, KeyEvent, KeyEventKind}, execute, queue};
+use crossterm::event::{read, Event::{self, Key}, KeyCode::{self}, KeyEvent, KeyEventKind};
 
 pub mod terminal;
 mod view;
@@ -98,10 +98,10 @@ impl Editor {
             Terminal::print("Goodbye.\r\n")?;
         }
         else {
-            //self.view.render()?; // todo: make navigation work without breaking the view
+            self.view.render()?; // todo: make navigation work without breaking the view
             Terminal::move_cursor(&Position{
                 x: self.location.x as u16,
-                y: self.location.y as u16,
+                y: (self.location.y - self.view.scroll_offset.y) as u16,
             })?;
             Terminal::show_cursor()?;
             Terminal::execute()?;
