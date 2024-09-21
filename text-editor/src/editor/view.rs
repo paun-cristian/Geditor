@@ -30,15 +30,18 @@ impl View {
         let start_line = self.scroll_offset.y;
         let end_line = core::cmp::min(start_line + height as usize, self.buffer.lines.len());
 
-        for current_row in 0..self.buffer.lines.len() as usize {
-            let buffer_row = current_row + start_line;
-            Terminal::move_cursor(&terminal::Position { x: 0, y: current_row as u16 })?;
-            Terminal::clear_line()?; // Clear the current line
-            
+        for (screen_row, buffer_row) in (start_line..end_line).enumerate() {
+            Terminal::move_cursor(&terminal::Position { x: 0, y: screen_row as u16 })?;
+            Terminal::clear_line()?;
+
             if let Some(line) = self.buffer.lines.get(buffer_row) {
-                Terminal::print(line)?; // Print the line from the buffer
+                // Break line into chunks that fit within the terminal width
+                for chunk in line.as_bytes().chunks(width as usize) {
+                    let chunk_str = std::str::from_utf8(chunk).unwrap_or("");
+                    Terminal::print(chunk_str)?;
+                }
             } else {
-                Terminal::print("~")?; // Print a tilde for lines beyond the buffer
+                Terminal::print("~")?;
             }
         }
         Ok(())

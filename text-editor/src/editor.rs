@@ -1,10 +1,11 @@
-use crossterm::event::{read, Event::{self, Key}, KeyCode::{self}, KeyEvent, KeyEventKind};
+use crossterm::event::{read, Event::{self, Key, Resize}, poll, KeyCode::{self}, KeyEvent, KeyEventKind};
 
 pub mod terminal;
 mod view;
 
 use view::{View, Location};
 use terminal::{Position, Terminal};
+use std::time::{Duration, Instant};
 
 pub struct Editor {
     should_quit: bool,
@@ -38,53 +39,71 @@ impl Editor {
 
     fn repl(&mut self) -> Result<(), std::io::Error> {
         Terminal::enable_raw_mode()?;
+        let mut last_render = Instant::now();
         View::render(&self.view)?;
         
         loop {
-            self.refresh_screen()?;
+            if last_render.elapsed() >= Duration::from_millis(16) { //render each sec 60times
+                self.refresh_screen()?;
+                last_render = Instant::now();
+            }
             if self.should_quit {
                 break;
             }
-            let event = read()?;
-            self.evaluate_event(&event);
+            if poll(std::time::Duration::from_millis(500))? {
+                let event = read()?;
+                self.evaluate_event(&event);
+            }
         }
         Ok(())
     }
     fn evaluate_event(&mut self, event: &Event) {
         if let Key(KeyEvent {
-            code,
             kind: KeyEventKind::Press, ..
         }) = event
         {
-            match code {
-                KeyCode::Esc => {
-                    self.should_quit = true;
+            match event {
+                Resize(new_height, new_width) => {
+                    View::resize(*new_height, *new_width).unwrap();
+                    self.view.render().unwrap();
                 }
-                KeyCode::Right 
-                | KeyCode::Left
-                | KeyCode::Up
-                | KeyCode::Down
-                | KeyCode::Home
-                | KeyCode::End
-                | KeyCode::PageUp
-                | KeyCode::PageDown => {
-                    Self::move_cursor_by_key(self, *code).unwrap();
-                }
-                KeyCode::Backspace => {
-                    Terminal::print(" ").unwrap();
-                    Self::move_cursor_by_key(self, KeyCode::Left).unwrap();
-                }
-                KeyCode::Char(c) => {
-                    match c {
-                        ' ' => {
-                            Terminal::print(stringify!( )).unwrap();
-                        }
-                        _ => (),
-                    }
-                    Self::move_cursor_by_key(self, KeyCode::Right).unwrap();
+                Key(KeyEvent {code, ..})  => {
+                    self.evaluate_key_event(code);
                 }
                 _ => (),
             }
+        }
+    }
+
+    fn evaluate_key_event(&mut self, code: &KeyCode) {
+        match code {
+            KeyCode::Esc => {
+                self.should_quit = true;
+            }
+            KeyCode::Right 
+            | KeyCode::Left
+            | KeyCode::Up
+            | KeyCode::Down
+            | KeyCode::Home
+            | KeyCode::End
+            | KeyCode::PageUp
+            | KeyCode::PageDown => {
+                Self::move_cursor_by_key(self, *code).unwrap();
+            }
+            KeyCode::Backspace => {
+                Terminal::print(" ").unwrap();
+                Self::move_cursor_by_key(self, KeyCode::Left).unwrap();
+            }
+            KeyCode::Char(c) => {
+                match c {
+                    ' ' => {
+                        Terminal::print(stringify!( )).unwrap();
+                    }
+                    _ => (),
+                }
+                Self::move_cursor_by_key(self, KeyCode::Right).unwrap();
+            }
+            _ => (),
         }
     }
     
