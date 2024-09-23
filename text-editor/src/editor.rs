@@ -147,6 +147,11 @@ impl Editor {
                         location.y = location.y.saturating_add(1);
                         location.x = 0;
                     }
+                    
+                    if location.y >= scroll_offset.y + terminal_size.height as usize {
+                        scroll_offset.y = scroll_offset.y.saturating_add(1);
+                        self.view.render()?;
+                    }
                 } else {
                     // Otherwise, just move to the right within the same line
                     location.x = location.x.saturating_add(1);
@@ -158,13 +163,13 @@ impl Editor {
                     location.x = location.x.saturating_sub(1);
                 } else 
                     if location.y > 0 {
+                        location.y = location.y.saturating_sub(1);
+                        
                         if location.y < scroll_offset.y {
-                            location.y = location.y.saturating_sub(1);
                             scroll_offset.y = scroll_offset.y.saturating_sub(1);
                             self.view.render()?;
                         }
                         else {
-                            location.y = location.y.saturating_sub(1);
                             let prev_line = self.view.buffer.lines[location.y].len();
 
                             location.x = prev_line;
