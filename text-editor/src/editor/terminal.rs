@@ -36,7 +36,7 @@ impl Terminal {
     pub fn initialize() -> Result<(), std::io::Error> {
         Terminal::enable_raw_mode()?;
         Terminal::clear_screen()?;
-        queue!(stdout(), SetTitle("Geditor  "))?;
+        queue!(stdout(), SetTitle("Geditor"))?;
         Terminal::move_cursor(&Position::default())?;
         Terminal::execute()?;
         Ok(())

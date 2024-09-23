@@ -5,7 +5,7 @@ mod view;
 
 use view::{View, Location};
 use terminal::{Position, Terminal};
-use std::time::{Duration, Instant};
+use std::{convert, time::{Duration, Instant}};
 
 pub struct Editor {
     should_quit: bool,
@@ -127,6 +127,9 @@ impl Editor {
         }
         Ok(())
     }
+
+    //todo: make cursor not move past end of string line
+    // it moves up if line x is bigger than x - 1 when moving up
     pub fn move_cursor_by_key(&mut self, keycode: KeyCode) -> Result<(), std::io::Error> {
         let terminal_size = Terminal::get_terminal_size()?;
         let buffer_height = self.view.buffer.lines.len();
@@ -135,10 +138,38 @@ impl Editor {
 
         match keycode {
             KeyCode::Right => {
-                location.x = core::cmp::min(self.view.buffer.lines[location.y].len(), location.x + 1);
+                let current_line_length = self.view.buffer.lines[location.y].len();
+
+                // If we're at the end of the line, move to the next line
+                if location.x == current_line_length {
+                    // Move to the next line and reset x to 0 if there's another line
+                    if location.y < buffer_height.saturating_sub(1) {
+                        location.y = location.y.saturating_add(1);
+                        location.x = 0;
+                    }
+                } else {
+                    // Otherwise, just move to the right within the same line
+                    location.x = location.x.saturating_add(1);
+                }
+
             }
-            KeyCode::Left => {
-                location.x = location.x.saturating_sub(1);
+            KeyCode::Left => { // fix going left and rendering when location.y = 1;
+                if location.x > 0 {
+                    location.x = location.x.saturating_sub(1);
+                } else 
+                    if location.y > 0 {
+                        if location.y < scroll_offset.y {
+                            location.y = location.y.saturating_sub(1);
+                            scroll_offset.y = scroll_offset.y.saturating_sub(1);
+                            self.view.render()?;
+                        }
+                        else {
+                            location.y = location.y.saturating_sub(1);
+                            let prev_line = self.view.buffer.lines[location.y].len();
+
+                            location.x = prev_line;
+                            }
+                    }
             }
             KeyCode::Up => {
                 if location.y > 0 {
