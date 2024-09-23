@@ -3,6 +3,7 @@ pub mod editor;
 use editor::Editor;
 
 // use egui for the GUI
+// do error handling
 fn main() {
     Editor::default().run();
 }

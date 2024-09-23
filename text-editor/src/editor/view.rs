@@ -88,7 +88,7 @@ impl View {
         } 
         
     }
-    pub fn clear_buffer(&mut self) -> () {
+    pub fn clear_buffer(&mut self) {
         self.buffer.lines.clear();
     }
 

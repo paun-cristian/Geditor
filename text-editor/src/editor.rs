@@ -5,7 +5,7 @@ mod view;
 
 use view::{View, Location};
 use terminal::{Position, Terminal};
-use std::{convert, thread::current, time::{Duration, Instant}};
+use std::time::{Duration, Instant};
 
 pub struct Editor {
     should_quit: bool,
