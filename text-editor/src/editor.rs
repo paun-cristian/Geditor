@@ -5,7 +5,7 @@ mod view;
 
 use view::{View, Location};
 use terminal::{Position, Terminal};
-use std::{convert, time::{Duration, Instant}};
+use std::{convert, thread::current, time::{Duration, Instant}};
 
 pub struct Editor {
     should_quit: bool,
@@ -164,7 +164,7 @@ impl Editor {
                 } else 
                     if location.y > 0 {
                         location.y = location.y.saturating_sub(1);
-                        
+
                         if location.y < scroll_offset.y {
                             scroll_offset.y = scroll_offset.y.saturating_sub(1);
                             self.view.render()?;
@@ -178,13 +178,23 @@ impl Editor {
             }
             KeyCode::Up => {
                 if location.y > 0 {
-                    location.y = location.y.saturating_sub(1);
                     
+                    let current_line_length = self.view.buffer.lines[location.y].len();
+                    let prev_line = self.view.buffer.lines[location.y - 1].len();
                     // Scroll up if cursor goes beyond visible area
+                    if current_line_length >= prev_line && location.x > prev_line {
+                        location.x = prev_line;
+                        location.y = location.y.saturating_sub(1);
+                        return Ok(());
+                    }
+                    else {
+                        location.y = location.y.saturating_sub(1);
+                    }
                     if location.y < scroll_offset.y {
                         scroll_offset.y = scroll_offset.y.saturating_sub(1);
                         self.view.render()?;
                     }
+                    
                 }
             }
             KeyCode::Down => {
