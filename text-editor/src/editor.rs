@@ -5,7 +5,7 @@ mod view;
 
 use view::{View, Location};
 use terminal::{Position, Terminal};
-use std::time::{Duration, Instant};
+use std::{io::Error, time::{Duration, Instant}};
 
 pub struct Editor {
     should_quit: bool,
@@ -97,9 +97,11 @@ impl Editor {
             KeyCode::Char(c) => {
                 match c {
                     ' ' => {
-                        Terminal::print(stringify!( )).unwrap();
+                        Self::print_to_buffer(self, c);
                     }
-                    _ => (),
+                    _ => {
+                        Self::print_to_buffer(self, c);
+                    }
                 }
                 Self::move_cursor_by_key(self, KeyCode::Right).unwrap();
             }
@@ -128,8 +130,7 @@ impl Editor {
         Ok(())
     }
 
-    //todo: make cursor not move past end of string line
-    // it moves up if line x is bigger than x - 1 when moving up
+    
     pub fn move_cursor_by_key(&mut self, keycode: KeyCode) -> Result<(), std::io::Error> {
         let terminal_size = Terminal::get_terminal_size()?;
         let buffer_height = self.view.buffer.lines.len();
@@ -158,7 +159,7 @@ impl Editor {
                 }
 
             }
-            KeyCode::Left => { // fix going left and rendering when location.y = 1;
+            KeyCode::Left => {
                 if location.x > 0 {
                     location.x = location.x.saturating_sub(1);
                 } else 
@@ -181,7 +182,7 @@ impl Editor {
                     
                     let current_line_length = self.view.buffer.lines[location.y].len();
                     let prev_line = self.view.buffer.lines[location.y - 1].len();
-                    // Scroll up if cursor goes beyond visible area
+                    
                     if current_line_length >= prev_line && location.x > prev_line {
                         location.x = prev_line;
                         location.y = location.y.saturating_sub(1);
@@ -197,21 +198,22 @@ impl Editor {
                     
                 }
             }
-            KeyCode::Down => {
+            KeyCode::Down => { // todo: fix 
+                // when pressing keydown it goes first to the x and then moves y
                 if location.y < buffer_height.saturating_sub(1) {
 
                     let current_line_length = self.view.buffer.lines[location.y].len();
                     let next_line = self.view.buffer.lines[location.y + 1].len();
 
                     if current_line_length >= next_line && location.x > next_line {
-                        location.x = next_line;
                         location.y = location.y.saturating_add(1);
+                        location.x = next_line;
                         return Ok(());
                     }
                     else {
                         location.y = location.y.saturating_add(1);
                     }
-                    // Scroll down if cursor goes beyond visible area
+                    
                     if location.y >= scroll_offset.y + terminal_size.height as usize {
                         scroll_offset.y = scroll_offset.y.saturating_add(1);
                         self.view.render()?;
@@ -222,6 +224,11 @@ impl Editor {
         }
 
         Ok(())
+    }
+
+    pub fn print_to_buffer(&mut self, c: &char) {
+        let line = &mut self.view.buffer.lines[self.location.y];
+        line.insert(self.location.x, *c);
     }
 }
 
