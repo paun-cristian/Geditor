@@ -5,7 +5,7 @@ mod view;
 
 use view::{View, Location};
 use terminal::{Position, Terminal};
-use std::{ops::Add, time::{Duration, Instant}};
+use std::time::{Duration, Instant};
 
 pub struct Editor {
     should_quit: bool,
@@ -52,12 +52,12 @@ impl Editor {
             }
             if poll(std::time::Duration::from_millis(500))? {
                 let event = read()?;
-                self.evaluate_event(&event);
+                self.evaluate_event(&event).unwrap();
             }
         }
         Ok(())
     }
-    fn evaluate_event(&mut self, event: &Event) {
+    fn evaluate_event(&mut self, event: &Event) -> Result<(), String> {
         if let Key(KeyEvent {
             kind: KeyEventKind::Press, ..
         }) = event
@@ -65,14 +65,15 @@ impl Editor {
             match event {
                 Resize(new_height, new_width) => {
                     View::resize(*new_height, *new_width).unwrap();
-                    self.view.render().unwrap();
+                    return Ok(self.view.render().unwrap());
                 }
                 Key(KeyEvent {code, ..})  => {
-                    self.evaluate_key_event(code);
+                    return Ok(self.evaluate_key_event(code));
                 }
-                _ => (),
+                _ => return Err(format!("Invalid event: {:?}", event)),
             }
         }
+        Ok(())
     }
 
     fn evaluate_key_event(&mut self, code: &KeyCode) {
