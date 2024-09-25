@@ -5,7 +5,7 @@ mod view;
 
 use view::{View, Location};
 use terminal::{Position, Terminal};
-use std::{io::Error, time::{Duration, Instant}};
+use std::{ops::Add, time::{Duration, Instant}};
 
 pub struct Editor {
     should_quit: bool,
@@ -90,10 +90,9 @@ impl Editor {
             | KeyCode::PageDown => {
                 Self::move_cursor_by_key(self, *code).unwrap();
             }
-            KeyCode::Backspace => {
-                Terminal::print(" ").unwrap();
-                Self::move_cursor_by_key(self, KeyCode::Left).unwrap();
-            }
+            // KeyCode::Backspace => {
+            //     Self::backspace(self);
+            // }
             KeyCode::Char(c) => {
                 match c {
                     ' ' => {
@@ -119,7 +118,7 @@ impl Editor {
             Terminal::print("Goodbye.\r\n")?;
         }
         else {
-            self.view.render()?; // todo: make navigation work without breaking the view
+            self.view.render()?; 
             Terminal::move_cursor(&Position{
                 x: self.location.x as u16,
                 y: (self.location.y - self.view.scroll_offset.y) as u16,
@@ -195,8 +194,7 @@ impl Editor {
                     
                 }
             }
-            KeyCode::Down => { // todo: fix 
-                // when pressing keydown it goes first to the x and then moves y
+            KeyCode::Down => { 
                 if location.y < buffer_height.saturating_sub(1) {
 
                     //let current_line_length = self.view.buffer.lines[location.y].len();
@@ -224,5 +222,18 @@ impl Editor {
         let line = &mut self.view.buffer.lines[self.location.y];
         line.insert(self.location.x, *c);
     }
+
+    // pub fn backspace(&mut self) {
+    //     let line = &mut self.view.buffer.lines[self.location.y];
+
+    //     if self.location.x > 0 {
+    //         line.remove(self.location.x - 1);
+    //         self.move_cursor_by_key(KeyCode::Left).unwrap();
+    //     } else if self.location.y > 0 {
+    //         let (prev_line, current_line) = self.view.buffer.lines.split_at_mut(self.location.y);
+    //         prev_line[self.location.y - 1].push_str(&current_line[0]);
+    //         self.view.buffer.lines.cop(self.location.y + 1.., self.location.y..);
+    //     }
+    // }
 }
 
