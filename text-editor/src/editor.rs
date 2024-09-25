@@ -202,18 +202,15 @@ impl Editor {
                 // when pressing keydown it goes first to the x and then moves y
                 if location.y < buffer_height.saturating_sub(1) {
 
-                    let current_line_length = self.view.buffer.lines[location.y].len();
-                    let next_line = self.view.buffer.lines[location.y + 1].len();
-
-                    if current_line_length >= next_line && location.x > next_line {
-                        location.y = location.y.saturating_add(1);
-                        location.x = next_line;
-                        return Ok(());
-                    }
-                    else {
-                        location.y = location.y.saturating_add(1);
-                    }
+                    //let current_line_length = self.view.buffer.lines[location.y].len();
+                    let next_line_len = self.view.buffer.lines[location.y + 1].len();
                     
+                    location.y = location.y.saturating_add(1);
+
+                    if location.x > next_line_len {
+                        location.x = next_line_len;
+                        
+                    }
                     if location.y >= scroll_offset.y + terminal_size.height as usize {
                         scroll_offset.y = scroll_offset.y.saturating_add(1);
                         self.view.render()?;
