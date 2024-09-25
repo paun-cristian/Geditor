@@ -180,16 +180,13 @@ impl Editor {
             KeyCode::Up => {
                 if location.y > 0 {
                     
-                    let current_line_length = self.view.buffer.lines[location.y].len();
-                    let prev_line = self.view.buffer.lines[location.y - 1].len();
+                    //let current_line_length = self.view.buffer.lines[location.y].len();
+                    let prev_line_len = self.view.buffer.lines[location.y - 1].len();
                     
-                    if current_line_length >= prev_line && location.x > prev_line {
-                        location.x = prev_line;
-                        location.y = location.y.saturating_sub(1);
-                        return Ok(());
-                    }
-                    else {
-                        location.y = location.y.saturating_sub(1);
+                    location.y = location.y.saturating_sub(1);
+
+                    if location.x > prev_line_len {
+                        location.x = prev_line_len;
                     }
                     if location.y < scroll_offset.y {
                         scroll_offset.y = scroll_offset.y.saturating_sub(1);
