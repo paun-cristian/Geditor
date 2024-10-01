@@ -10,6 +10,11 @@ pub struct Size {
     pub width: u16,
     pub height: u16
 }
+impl Default for Size {
+    fn default() -> Self {
+        Self {width: 1280, height: 720}
+    }
+}
 
 #[derive(Clone, Copy, Default)]
 pub struct Position {    

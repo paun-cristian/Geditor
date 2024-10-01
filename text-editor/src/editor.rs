@@ -94,6 +94,7 @@ impl Editor {
             // KeyCode::Backspace => {
             //     Self::backspace(self);
             // }
+            // make the buffer resize the screen when going out of x axis
             KeyCode::Char(c) => {
                 match c {
                     ' ' => {
@@ -220,8 +221,18 @@ impl Editor {
     }
 
     pub fn print_to_buffer(&mut self, c: &char) {
-        let line = &mut self.view.buffer.lines[self.location.y];
-        line.insert(self.location.x, *c);
+        let _terminal = Terminal::get_terminal_size().unwrap();
+        if self.view.buffer.lines[self.location.y].len() as u16 > _terminal.width {
+            let next_line = &mut self.view.buffer.lines[self.location.y + 1];
+            Self::move_cursor_by_key(self, KeyCode::Down).unwrap();
+            self.location.x = 0;
+            //let crop = self.view.buffer.lines[self.location.y][.._terminal.width];
+            
+        }
+        else {
+            let line = &mut self.view.buffer.lines[self.location.y];
+            line.insert(self.location.x, *c);
+        }
     }
 
     // pub fn backspace(&mut self) {

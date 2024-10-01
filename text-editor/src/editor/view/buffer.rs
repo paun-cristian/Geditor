@@ -1,7 +1,7 @@
 pub struct Buffer {
     pub lines: Vec<String>
 }
-
+/*add to buffer and resize screen when writing out of x axis */
 
 impl Default for Buffer {
     fn default() -> Self {
