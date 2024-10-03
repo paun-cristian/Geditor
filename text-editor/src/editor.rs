@@ -222,11 +222,19 @@ impl Editor {
 
     pub fn print_to_buffer(&mut self, c: &char) {
         let _terminal = Terminal::get_terminal_size().unwrap();
-        if self.view.buffer.lines[self.location.y].len() as u16 > _terminal.width {
-            let next_line = &mut self.view.buffer.lines[self.location.y + 1];
+        let line_len = self.view.buffer.lines[self.location.y].len() as u16;
+
+        if line_len > _terminal.width {
             Self::move_cursor_by_key(self, KeyCode::Down).unwrap();
             self.location.x = 0;
-            //let crop = self.view.buffer.lines[self.location.y][.._terminal.width];
+
+            let (buffer_start, buffer_end) = self.view.buffer.lines.split_at_mut(self.location.y + 1);
+            let current_line = &mut buffer_start[self.location.y];
+            let next_line = &mut buffer_end[0]; 
+            
+
+            let (first, last) = current_line.split_at_mut(_terminal.width as usize);
+            next_line.insert_str(self.location.x, last);
             
         }
         else {
