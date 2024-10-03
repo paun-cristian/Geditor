@@ -64,8 +64,8 @@ impl Editor {
         {
             match event {
                 Resize(new_height, new_width) => {
-                    View::resize(*new_height, *new_width).unwrap();
-                    return Ok(self.view.render().unwrap());
+                    View::resize(*new_height, *new_width).map_err(|e| e.to_string())?;
+                    return Ok(self.view.render().map_err(|e| e.to_string())?);
                 }
                 Key(KeyEvent {code, ..})  => {
                     return Ok(self.evaluate_key_event(code));
@@ -222,25 +222,26 @@ impl Editor {
 
     pub fn print_to_buffer(&mut self, c: &char) {
         let _terminal = Terminal::get_terminal_size().unwrap();
-        let line_len = self.view.buffer.lines[self.location.y].len() as u16;
-
-        if line_len > _terminal.width {
+        let line_len = self.view.buffer.lines[self.location.y].len();
+    
+        if self.location.x as u16 >= _terminal.width {
             Self::move_cursor_by_key(self, KeyCode::Down).unwrap();
-            self.location.x = 0;
-
-            let (buffer_start, buffer_end) = self.view.buffer.lines.split_at_mut(self.location.y + 1);
-            let current_line = &mut buffer_start[self.location.y];
-            let next_line = &mut buffer_end[0]; 
-            
-
-            let (first, last) = current_line.split_at_mut(_terminal.width as usize);
-            next_line.insert_str(self.location.x, last);
-            
+            self.location.x = 0;            
         }
-        else {
-            let line = &mut self.view.buffer.lines[self.location.y];
-            line.insert(self.location.x, *c);
+    
+        let line = &mut self.view.buffer.lines[self.location.y];
+        line.insert(self.location.x, *c);
+    
+        if line.len() as u16 > _terminal.width {
+            let next_line_content = line.split_off(_terminal.width as usize);
+    
+            if self.location.y + 1 < self.view.buffer.lines.len() {
+                self.view.buffer.lines[self.location.y + 1].insert_str(0, &next_line_content);
+            } else {
+                self.view.buffer.lines.push(next_line_content);
+            }
         }
+        self.view.render().unwrap();
     }
 
     // pub fn backspace(&mut self) {
