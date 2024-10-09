@@ -30,15 +30,27 @@ impl View {
         let start_line = self.scroll_offset.y;
         let end_line = core::cmp::min(start_line + height as usize, self.buffer.lines.len());
 
-        for (screen_row, buffer_row) in (start_line..end_line).enumerate() {
+        for (mut screen_row, mut buffer_row) in (start_line..end_line).enumerate() {
             Terminal::move_cursor(&terminal::Position { x: 0, y: screen_row as u16 })?;
             Terminal::clear_line()?;
 
             if let Some(line) = self.buffer.lines.get(buffer_row) {
-                // Break line into chunks that fit within the terminal width
+                // todo: Break line into chunks that fit within the terminal width
+                // if line.len() as u16 > width {
+                //     for _ in 1..line.len() as u16 % width {
+                //         let chunk = &line[..width as usize];
+                //         Terminal::print(chunk)?;
+                //         Terminal::move_cursor(&terminal::Position { x: 0, y: screen_row as u16 })?;
+                //         screen_row += 1;
+                //         buffer_row += 1;
+                //     }
+                // }
                 for chunk in line.as_bytes().chunks(width as usize) {
                     let chunk_str = std::str::from_utf8(chunk).unwrap_or("");
                     Terminal::print(chunk_str)?;
+                    screen_row += 1;
+                    Terminal::move_cursor(&terminal::Position { x: 0, y: screen_row as u16 })?;
+
                 }
             } else {
                 Terminal::print("~")?;
@@ -76,10 +88,11 @@ impl View {
     pub fn load(&mut self, filename: &str) -> Option<&str> {
         if let Some(contents) = std::fs::read_to_string(filename).ok() {
             Self::clear_buffer(self);
+
             for lines in contents.lines() {
                 self.buffer.lines.push(lines.to_string());
             }
-            Self::resize(self.buffer.lines.len() as u16, 
+            Self::resize(self, self.buffer.lines.len() as u16, 
                 self.buffer.lines.iter().map(|line| line.len()).max().unwrap() as u16).unwrap();
             None
         } 
@@ -92,8 +105,9 @@ impl View {
         self.buffer.lines.clear();
     }
 
-    pub fn resize(required_height: u16, required_width: u16) -> Result<(), std::io::Error> {
+    pub fn resize(&self, required_height: u16, required_width: u16) -> Result<(), std::io::Error> {
         Terminal::update_size(required_height, required_width)?;
+        Self::render(&self)?;
         Ok(())
     }
 

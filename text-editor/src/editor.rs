@@ -30,7 +30,6 @@ impl Editor {
     pub fn run(&mut self) {
         Terminal::initialize().unwrap();
         self.handle_args();
-       // View::render(&self.view).unwrap();
 
         let result = self.repl();
         Terminal::terminate().unwrap();
@@ -64,8 +63,7 @@ impl Editor {
         {
             match event {
                 Resize(new_height, new_width) => {
-                    View::resize(*new_height, *new_width).map_err(|e| e.to_string())?;
-                    return Ok(self.view.render().map_err(|e| e.to_string())?);
+                    return Ok(View::resize(&self.view, *new_height, *new_width).map_err(|e| e.to_string())?);
                 }
                 Key(KeyEvent {code, ..})  => {
                     return Ok(self.evaluate_key_event(code));
