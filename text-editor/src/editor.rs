@@ -89,9 +89,9 @@ impl Editor {
             | KeyCode::PageDown => {
                 Self::move_cursor_by_key(self, *code).unwrap();
             }
-            // KeyCode::Backspace => {
-            //     Self::backspace(self);
-            // }
+            KeyCode::Backspace => {
+                Self::backspace(self);
+            }
             // make the buffer resize the screen when going out of x axis
             KeyCode::Char(c) => {
                 match c {
@@ -216,6 +216,18 @@ impl Editor {
         }
 
         Ok(())
+    }
+
+    pub fn backspace(&mut self){
+        let line = &mut self.view.buffer.lines[self.location.y];
+        if self.location.x > 0 {
+            line.remove(self.location.x - 1);
+            self.move_cursor_by_key(KeyCode::Left).unwrap();
+        } else if self.location.y > 0 {
+            let (prev_line, current_line) = self.view.buffer.lines.split_at_mut(self.location.y);
+            prev_line[self.location.y - 1].push_str(&current_line[0]);
+            self.view.buffer.lines.copy_within(self.location.y + 1.., self.location.y..);
+        }
     }
 
     pub fn print_to_buffer(&mut self, c: &char) {
