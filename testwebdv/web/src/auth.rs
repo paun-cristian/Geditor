@@ -39,6 +39,11 @@ impl User {
         }
     }
     pub async fn register(Form(form) : Form<RegisterForm>) -> impl IntoResponse {
+        let existing_user = sqlx::query!("SELECT * FROM users WHERE username = ?", form.username)
+            .fetch_optional()
+            .await
+            .unwrap();
+
         match(form.username, form.email, form.password) {
             (Some(username), Some(email), Some(password)) => {
                 let user = User::new(rand::random::<u8>(), 
