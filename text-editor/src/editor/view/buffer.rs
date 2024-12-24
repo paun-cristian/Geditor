@@ -19,4 +19,16 @@ impl Buffer {
     pub fn is_empty(&self) -> bool {
         self.lines.is_empty()
     }
+    pub fn reformat_lines(&mut self, width: u16) {
+        let mut new_lines = Vec::new();
+        for line in &self.lines {
+            let mut start = 0;
+            while start < line.len() {
+                let end = std::cmp::min(start + width as usize, line.len());
+                new_lines.push(line[start..end].to_string());
+                start = end;
+            }
+        }
+        self.lines = new_lines;
+    }
 }

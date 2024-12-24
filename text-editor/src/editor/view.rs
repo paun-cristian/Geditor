@@ -30,7 +30,7 @@ impl View {
         let start_line = self.scroll_offset.y;
         let end_line = core::cmp::min(start_line + height as usize, self.buffer.lines.len());
 
-        for (mut screen_row, mut buffer_row) in (start_line..end_line).enumerate() {
+        for (mut screen_row, buffer_row) in (start_line..end_line).enumerate() {
             Terminal::move_cursor(&terminal::Position { x: 0, y: screen_row as u16 })?;
             Terminal::clear_line()?;
 
@@ -105,8 +105,9 @@ impl View {
         self.buffer.lines.clear();
     }
 
-    pub fn resize(&self, required_height: u16, required_width: u16) -> Result<(), std::io::Error> {
+    pub fn resize(&mut self, required_height: u16, required_width: u16) -> Result<(), std::io::Error> {
         Terminal::update_size(required_height, required_width)?;
+        self.buffer.reformat_lines(required_width);
         Self::render(&self)?;
         Ok(())
     }

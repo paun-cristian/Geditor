@@ -63,7 +63,7 @@ impl Editor {
         {
             match event {
                 Resize(new_height, new_width) => {
-                    return Ok(View::resize(&self.view, *new_height, *new_width).map_err(|e| e.to_string())?);
+                    return Ok(View::resize(&mut self.view, *new_height, *new_width).map_err(|e| e.to_string())?);
                 }
                 Key(KeyEvent {code, ..})  => {
                     return Ok(self.evaluate_key_event(code));
