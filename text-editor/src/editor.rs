@@ -1,23 +1,26 @@
-use crossterm::event::{read, Event::{self, Key, Resize}, poll, KeyCode::{self}, KeyEvent, KeyEventKind};
+use crossterm::event::{poll, read, Event::{self, Key, Resize}, KeyCode::{self}, KeyEvent, KeyEventKind, KeyModifiers, ModifierKeyCode};
 
 pub mod terminal;
 mod view;
+mod file;
 
+use file::File;
 use view::{View, Location};
 use terminal::{Position, Terminal};
-use std::{ops::Index, time::{Duration, Instant}};
+use std::time::{Duration, Instant};
 
 pub struct Editor {
     should_quit: bool,
     location : Location,
     view: View,
+    file: File,
 }
 
 
 impl Editor {
     #[must_use]
     pub fn default() -> Self {
-        Editor { should_quit: false, location: Location {x: 0, y: 1}, view: View::default()}
+        Editor { should_quit: false, location: Location {x: 0, y: 1}, view: View::default(), file: File::default() }
     }
 
     pub fn handle_args(&mut self) {
@@ -65,8 +68,12 @@ impl Editor {
                 Resize(new_height, new_width) => {
                     return Ok(View::resize(&mut self.view, *new_height, *new_width).map_err(|e| e.to_string())?);
                 }
-                Key(KeyEvent {code, ..})  => {
-                    return Ok(self.evaluate_key_event(code));
+                Key(KeyEvent { code, modifiers, .. }) => {
+                    if modifiers.is_empty() {
+                        self.evaluate_key_event(code);
+                    } else {
+                        self.evaluate_modifiers(modifiers, code);
+                    }
                 }
                 _ => return Err(format!("Invalid event: {:?}", event)),
             }
@@ -75,6 +82,7 @@ impl Editor {
     }
 
     fn evaluate_key_event(&mut self, code: &KeyCode) {
+        self.file.modified = true;
         match code {
             KeyCode::Esc => {
                 self.should_quit = true;
@@ -105,6 +113,20 @@ impl Editor {
                     }
                 }
                 Self::move_cursor_by_key(self, KeyCode::Right).unwrap();
+            }
+            _ => (),
+        }
+    }
+
+    fn evaluate_modifiers(&mut self, modifiers: &KeyModifiers, code: &KeyCode) {
+        match modifiers {
+            &KeyModifiers::CONTROL => {
+                match code {
+                    KeyCode::Char('s') => {
+                        //self.view.save().unwrap();
+                    }
+                    _ => (),
+                }
             }
             _ => (),
         }
@@ -279,17 +301,5 @@ impl Editor {
         self.view.render().unwrap();
     }
 
-    // pub fn backspace(&mut self) {
-    //     let line = &mut self.view.buffer.lines[self.location.y];
-
-    //     if self.location.x > 0 {
-    //         line.remove(self.location.x - 1);
-    //         self.move_cursor_by_key(KeyCode::Left).unwrap();
-    //     } else if self.location.y > 0 {
-    //         let (prev_line, current_line) = self.view.buffer.lines.split_at_mut(self.location.y);
-    //         prev_line[self.location.y - 1].push_str(&current_line[0]);
-    //         self.view.buffer.lines.cop(self.location.y + 1.., self.location.y..);
-    //     }
-    // }
 }
 
