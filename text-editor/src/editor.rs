@@ -5,7 +5,7 @@ mod view;
 
 use view::{View, Location};
 use terminal::{Position, Terminal};
-use std::time::{Duration, Instant};
+use std::{ops::Index, time::{Duration, Instant}};
 
 pub struct Editor {
     should_quit: bool,
@@ -220,19 +220,29 @@ impl Editor {
 
     pub fn backspace(&mut self){
         let line = &mut self.view.buffer.lines[self.location.y];
+        let mut moved : bool = false;
+        let mut prev_len = 0;
+
         if self.location.x > 0 {
             line.remove(self.location.x - 1);
             self.move_cursor_by_key(KeyCode::Left).unwrap();
         } else if self.location.y > 0 {
+            moved = true;
             let (prev_line, current_line) = self.view.buffer.lines.split_at_mut(self.location.y);
+            prev_len = prev_line[self.location.y - 1].len();
             prev_line[self.location.y - 1].push_str(&current_line[0]);
-            self.view.buffer.lines.copy_within(self.location.y + 1.., self.location.y..);
+            self.view.buffer.lines.remove(self.location.y);
+            self.view.render().unwrap();
+        } 
+        if moved {
+            self.move_cursor_by_key(KeyCode::Up).unwrap();  
+            self.location.x = prev_len;
         }
     }
 
     pub fn print_to_buffer(&mut self, c: &char) {
         let _terminal = Terminal::get_terminal_size().unwrap();
-        let line_len = self.view.buffer.lines[self.location.y].len();
+    //    let line_len = self.view.buffer.lines[self.location.y].len();
     
         if self.location.x as u16 >= _terminal.width {
             Self::move_cursor_by_key(self, KeyCode::Down).unwrap();
