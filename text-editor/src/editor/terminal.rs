@@ -30,6 +30,17 @@ impl Position {
 }
 
 impl Terminal {
+    pub fn print_highlighted(string: &str) -> Result<(), std::io::Error> {
+        use crossterm::style::{Color, SetBackgroundColor, ResetColor};
+
+        queue!(
+            stdout(),
+            SetBackgroundColor(Color::Blue), // Set the background color to blue (or any color you prefer)
+            Print(string),
+            ResetColor // Reset the color after printing
+        )?;
+        Ok(())
+    }
     pub fn enable_raw_mode() -> Result<(), std::io::Error> {
         enable_raw_mode().unwrap();
         Ok(())
