@@ -104,10 +104,6 @@ impl View {
     pub fn clear_buffer(&mut self) {
         self.buffer.lines.clear();
     }
-    
-    pub fn get_buffer(self) -> Vec<String> {
-        self.buffer.lines
-    }
 
     pub fn resize(&mut self, required_height: u16, required_width: u16) -> Result<(), std::io::Error> {
         Terminal::update_size(required_height, required_width)?;

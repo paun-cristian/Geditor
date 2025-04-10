@@ -1,5 +1,3 @@
-use std::fs;
-use super::view::{self, View};
 pub struct File {
     pub modified: bool,
     pub saved: bool,
