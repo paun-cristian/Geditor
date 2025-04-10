@@ -1,18 +1,13 @@
 use std::fs;
-use super::view::View;
+use super::view::{self, View};
 pub struct File {
     pub modified: bool,
     pub saved: bool,
+    pub filename: String,
 }
 
 impl File {
     pub fn default() -> Self {
-        Self { modified: false, saved: false }
+        Self { modified: false, saved: false, filename: String::new() }
     }
-    // pub fn save(&mut self, buffer: Vec<String>) {
-    //     write(buffer);
-
-    //     self.saved = true;
-    //     self.modified = false;
-    // }
 }
