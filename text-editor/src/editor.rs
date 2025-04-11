@@ -59,6 +59,7 @@ impl Editor {
             if last_render.elapsed() >= Duration::from_millis(16) { //render each sec 60times
                 self.refresh_screen()?;
                 last_render = Instant::now();
+                self.save();
             }
             if self.should_quit {
                 break;
