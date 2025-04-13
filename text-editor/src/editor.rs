@@ -93,28 +93,6 @@ impl Editor {
         Ok(())
     }
 
-    // fn select_all(&mut self) {
-    //     // Set the cursor to the beginning of the buffer
-    //     self.location.x = 0;
-    //     self.location.y = 0;
-    //     self.view.scroll_offset.x = 0;
-    //     self.view.scroll_offset.y = 0;
-
-    //     // Highlight all lines in the buffer
-    //     for (i, line) in self.view.buffer.lines.iter().enumerate() {
-    //         Terminal::move_cursor(&Position { x: 0, y: i as u16 }).unwrap();
-    //         Terminal::print_highlighted(line).unwrap();
-    //     }
-
-    //     // Move the cursor back to the original position
-    //     Terminal::move_cursor(&Position {
-    //         x: self.location.x as u16,
-    //         y: (self.location.y - self.view.scroll_offset.y) as u16,
-    //     }).unwrap();
-    //     Terminal::show_cursor().unwrap();
-    //     Terminal::execute().unwrap();
-    // }
-
     
     fn evaluate_key_event(&mut self, code: &KeyCode) {
         self.file.modified = true;
@@ -162,7 +140,19 @@ impl Editor {
                         self.save();
                     }
                     KeyCode::Char('a') => {
-                        // self.location.x = 0;
+                        self.location.x = 0;
+                    }
+                    KeyCode::Right => {
+                        let line = &self.view.buffer.lines[self.location.y];
+                        if let Some(space_index) = line[self.location.x..].find(' ') {
+                            self.location.x += space_index + 1; // Move to the character after the space
+                        } else {
+                            self.location.x = line.len(); // Move to the end of the line
+                        }
+                    }
+                    KeyCode::Left => {
+                        let line = &self.view.buffer.lines[self.location.y][..self.location.x];
+                        self.location.x = line.rfind(' ').unwrap_or(0);
                     }
                     _ => (),
                 }
