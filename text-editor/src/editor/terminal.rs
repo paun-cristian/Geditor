@@ -1,7 +1,7 @@
 use crossterm::{
-    cursor::{Hide, Show}, event::read, queue, style::Print, terminal::{disable_raw_mode, enable_raw_mode, size, SetTitle, Clear, ClearType}
+    style::*, execute, cursor::{Hide, Show}, event::read, queue, style::Print, terminal::{self, disable_raw_mode, enable_raw_mode, size, Clear, ClearType, SetTitle}
 };
-use std::io::{stdout, Write};
+use std::io::{stdout, Stdout, Write};
 
 pub struct Terminal;
 
@@ -30,17 +30,6 @@ impl Position {
 }
 
 impl Terminal {
-    pub fn print_highlighted(string: &str) -> Result<(), std::io::Error> {
-        use crossterm::style::{Color, SetBackgroundColor, ResetColor};
-
-        queue!(
-            stdout(),
-            SetBackgroundColor(Color::Blue), // Set the background color to blue (or any color you prefer)
-            Print(string),
-            ResetColor // Reset the color after printing
-        )?;
-        Ok(())
-    }
     pub fn enable_raw_mode() -> Result<(), std::io::Error> {
         enable_raw_mode().unwrap();
         Ok(())
@@ -49,6 +38,11 @@ impl Terminal {
         disable_raw_mode().unwrap();
         Ok(())
     }
+    pub fn set_background_color(mut terminal: Stdout, color: Color) -> Result<(), std::io::Error> {
+        execute!(terminal, SetBackgroundColor(color))?;
+        Ok(())
+    }
+
     pub fn initialize() -> Result<(), std::io::Error> {
         Terminal::enable_raw_mode()?;
         Terminal::clear_screen()?;

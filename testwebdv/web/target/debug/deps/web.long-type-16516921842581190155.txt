@@ -1,1 +1,0 @@
-for<'a> fn(&'a str) -> impl Future<Output = impl axum::response::IntoResponse> {read_html}

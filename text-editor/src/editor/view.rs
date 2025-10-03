@@ -35,16 +35,6 @@ impl View {
             Terminal::clear_line()?;
 
             if let Some(line) = self.buffer.lines.get(buffer_row) {
-                // todo: Break line into chunks that fit within the terminal width
-                // if line.len() as u16 > width {
-                //     for _ in 1..line.len() as u16 % width {
-                //         let chunk = &line[..width as usize];
-                //         Terminal::print(chunk)?;
-                //         Terminal::move_cursor(&terminal::Position { x: 0, y: screen_row as u16 })?;
-                //         screen_row += 1;
-                //         buffer_row += 1;
-                //     }
-                // }
                 for chunk in line.as_bytes().chunks(width as usize) {
                     let chunk_str = std::str::from_utf8(chunk).unwrap_or("");
                     Terminal::print(chunk_str)?;

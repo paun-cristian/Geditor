@@ -1,5 +1,4 @@
 use crossterm::event::{poll, read, Event::{self, Key, Resize}, KeyCode::{self}, KeyEvent, KeyEventKind, KeyModifiers};
-
 pub mod terminal;
 mod view;
 mod file;
@@ -8,19 +7,19 @@ use file::File;
 use view::{View, Location};
 use terminal::{Position, Terminal};
 use std::time::{Duration, Instant};
-
 pub struct Editor {
     should_quit: bool,
     location : Location,
     view: View,
     file: File,
+    terminal: std::io::Stdout,
 }
 
 
 impl Editor {
     #[must_use]
     pub fn default() -> Self {
-        Editor { should_quit: false, location: Location {x: 0, y: 1}, view: View::default(), file: File::default() }
+        Editor { should_quit: false, location: Location {x: 0, y: 1}, view: View::default(), file: File::default(), terminal: std::io::stdout()} 
     }
 
     pub fn handle_args(&mut self) {
@@ -44,7 +43,9 @@ impl Editor {
     pub fn run(&mut self) {
         Terminal::initialize().unwrap();
         self.handle_args();
-
+        self.terminal = std::io::stdout();
+        //Terminal::set_background_color(self.terminal, terminal::Color::Black).unwrap();
+        
         let result = self.repl();
         Terminal::terminate().unwrap();
         result.unwrap();
@@ -145,16 +146,33 @@ impl Editor {
                     KeyCode::Right => {
                         let line = &self.view.buffer.lines[self.location.y];
                         if let Some(space_index) = line[self.location.x..].find(' ') {
-                            self.location.x += space_index + 1; // Move to the character after the space
+                            self.location.x += space_index + 1;
                         } else {
-                            self.location.x = line.len(); // Move to the end of the line
+                            self.location.x = line.len();
+                        }
+                        if self.location.x == line.len() {
+                            self.location.y = self.location.y.saturating_add(1);
+                            self.location.x = 0;
                         }
                     }
                     KeyCode::Left => {
                         let line = &self.view.buffer.lines[self.location.y][..self.location.x];
-                        self.location.x = line.rfind(' ').unwrap_or(0);
+                        let temp_loc = line.rfind(' ');
+
+                        match temp_loc {
+                            Some(index) => self.location.x = index,
+                            None => {
+                                if self.location.y > 0 && self.location.x == 0 {
+                                    self.location.y = self.location.y.saturating_sub(1);
+                                    self.location.x = self.view.buffer.lines[self.location.y].len();
+                                }
+                                else {
+                                    self.location.x = 0;
+                                }
+                            }
+                        }
                     }
-                    _ => (),
+                        _ => (),
                 }
             }
             _ => (),
@@ -331,4 +349,5 @@ impl Editor {
     }
 
 }
+
 
