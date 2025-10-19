@@ -2,4 +2,7 @@ target
 *.txt
 *.code-workspace
 tempCodeRunnerFile.*
+<<<<<<< HEAD
 
+=======
+>>>>>>> 11da673 (Fix: .gitignore)
